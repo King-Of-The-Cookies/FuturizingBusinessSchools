@@ -92,7 +92,7 @@ public class TwitterSetup {
 		this.maxDate = date;
 	}
 	
-	public void getTimeline(String userName, String maxDateDDMMYYYY, int universityID) throws TwitterException, ParseException, IOException{
+	public void getTimeline(String userName, String maxDateDDMMYYYY, int universityID, Connection connection) throws TwitterException, ParseException, IOException{
 		DBSetup dbsetup = new DBSetup();
 
 		setMaxDate(maxDateDDMMYYYY);
@@ -148,7 +148,7 @@ public class TwitterSetup {
 				
 				
 				try {
-					dbsetup.sendToDB(tweetid, universityID, tweetText, tweetlanguage, screenName, tweetCreatedAt, favoriteCount, source, isRetweeted, retweetCount);
+					dbsetup.sendToDB(tweetid, universityID, tweetText, tweetlanguage, screenName, tweetCreatedAt, favoriteCount, source, isRetweeted, retweetCount, connection);
 				} catch (SQLException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
