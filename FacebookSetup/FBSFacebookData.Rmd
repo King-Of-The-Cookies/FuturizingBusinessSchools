@@ -1,0 +1,62 @@
+---
+title: "FacebookSetup"
+output: html_document
+---
+```{r}
+setwd("~/Documents/R programming/FBS project folder/Facebook")
+source("GetPosts_Comments.R")
+Sys.setenv(JAVA_HOME='/Library/Java/Home')
+options(java.parameters = "-Xmx2g")
+library(rJava)
+.jinit()
+  
+library(RJDBC)
+jdbcDriver <- JDBC(driverClass= "oracle.jdbc.driver.OracleDriver", classPath = "")
+  
+jdbcConnection <- dbConnect(jdbcDriver)
+  
+library(Rfacebook)
+fb_oauth <- fbOAuth()
+token <- ""
+
+universities <- c("MITnews", "StanfordGSB", "HarvardBusinessSchool", "Cambridge-Judge-Business-School", "californiainstituteoftechnology")
+
+
+for(university in 1:length(universities)){
+  
+
+data_list <- getPostsComments(universities[university], token = token, since = "2011/01/01")
+library(stringr)
+
+posts <- data_list$posts
+post_id_split <- as.data.frame(str_split_fixed(posts$id, "_",2))
+posts$post_id <- as.numeric(as.character(post_id_split$V2))
+
+posts$university_id <- university
+
+comments <- data_list$comments
+comment_id_split <- as.data.frame(str_split_fixed(comments$id, "_",2))
+comments$post_id <- as.numeric(as.character(comment_id_split$V1))
+comments$comment_id <- as.numeric(as.character(comment_id_split$V2))
+
+for(i in 1:nrow(posts)){
+RJDBC::dbSendUpdate(jdbcConnection, "INSERT INTO FBSADMIN.FACEBOOK_POSTS (FROM_ID, FROM_NAME, MESSAGE, CREATED_TIME, TYPE, LINK, POST_ID, LIKES_COUNT, COMMENTS_COUNT, SHARES_COUNT, UNIVERSITY_ID) VALUES (?,?,?,?,?,?,?,?,?,?,?)",posts[i,1],posts[i,2],posts[i,3],posts[i,4],posts[i,5],posts[i,6], posts[i,12],posts[i,9],posts[i,10],posts[i,11], posts[i,13])
+}
+
+
+for(i in 1:nrow(comments)){
+  tryCatch({
+    RJDBC::dbSendUpdate(jdbcConnection, "INSERT INTO FBSADMIN.FACEBOOK_COMMENTS (FROM_ID, MESSAGE, CREATED_TIME, LIKES_COUNT, COMMENTS_COUNT, POST_ID, COMMENT_ID) VALUES (?,?,?,?,?,?,?)",comments[i,1],comments[i,3],comments[i,4],comments[i,5],comments[i,6],comments[i,8],comments[i,9])
+  }, error=function(e){print("An error occurred")})
+
+}
+
+}
+print("done")
+
+
+
+dbDisconnect(jdbcConnection)
+
+```
+
