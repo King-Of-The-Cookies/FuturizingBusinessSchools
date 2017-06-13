@@ -15,8 +15,6 @@ from selenium.webdriver.common.keys import Keys
 import csv
 import pandas as pd
 
- 
- 
 def init_driver():
 
     #driver = webdriver.Chrome(executable_path='/Users/guysimons/Documents/JAVA/Webscraping/Drivers/chromedriver')
@@ -45,6 +43,8 @@ links = ["https://www.indeed.com/Best-Places-to-Work",
 
 #get values of Select(driver.find_element_by_xpath("//div[@id = 'cmp-discovery-country-select']/select"))
 
+'''
+for some reason it now gives me an error and doesn't start with step 2. It worked at work on the same computer. 
 companies = [ ]
 
 for item in links:
@@ -60,7 +60,14 @@ for item in links:
 
     # select the reviews. 
 
-for item in companies:
+#driver.quit()
+'''
+
+
+companies = pd.read_csv("companies_indeed_leaderboard.csv", names=["company"], header=0)
+
+driver = init_driver()
+for item in companies[0]:
     rev_comp = []
     pros_comp = []
     cons_comp = []
@@ -73,46 +80,62 @@ for item in companies:
     inputElement = driver.find_element_by_id("search-by-company")
     inputElement.send_keys(item)
     inputElement.send_keys(Keys.ENTER)
-    
-    rev_btn = driver.find_element_by_xpath("//div[@class='cmp-tile-footer-element']/a[@data-tn-element='reviews-footer-link']")
-    rev_btn.click()
 
     while True: #
-        
-        # grap the reviews and store in datafile w/ name = item
-        # currently only does 1st page. Need to create loop also for this? Or better way
-        #for all pages ()
+    
+    # grap the reviews and store in datafile w/ name = item
+    # currently only does 1st page. Need to create loop also for this? Or better way
+    #for all pages ()
 #            wait.until(EC.visibility_of_element_located())
-        txt_rev = driver.find_elements_by_xpath("//span[@class='cmp-review-text']")
-        pros = driver.find_elements_by_xpath("//div[@class='cmp-review-pro-text']")
-        cons = driver.find_elements_by_xpath("//div[@class='cmp-review-con-text']")
+    print ("wait 10s for page to load")
+    driver.wait = WebDriverWait(driver, 10)    
+    
+    txt_rev = driver.find_elements_by_xpath("//span[@class='cmp-review-text']")
+    print ("text found")
+    pros = driver.find_elements_by_xpath("//div[@class='cmp-review-pro-text']")
+    print ("pros found" )
+    cons = driver.find_elements_by_xpath("//div[@class='cmp-review-con-text']")
+    print ("cons found")
+    
+    # store output
+    print ("begin storing")
+    for i in range(0, len(txt_rev)):
+        rev_comp.append(txt_rev[i].text)
+    print ("stored text in rev_comp")
+    for i in range(0, len(pros)):
+        pros_comp.append(pros[i].text)
+    print ("stored pros in pros_comp")
+    for i in range(0, len(cons)):
+        cons_comp.append(cons[i].text)
+    print ("stored cons in cons_comp")
         
-        # store output
-        for i in range(0, len(txt_rev)):
-            rev_comp.append(txt_rev[i].text)
-        for i in range(0, len(pros)):
-            pros_comp.append(pros[i].text)
-        for i in range(0, len(cons)):
-            cons_comp.append(cons[i].text)
-                
+    print ("page done, go to next") 
+
+    next_btn = driver.find_element_by_xpath("//a[@data-tn-element='next-page']/span")
+    next_btn.click() 
+    txt_rev = []
+    pros = [ ]
+    cons = [ ]
+    element = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, "//span[@class='cmp-review-text']")))
+    
+
     try:
-        #driver.find_element_by_link_text('next-page').click #correct by element?
-        driver.find_element_by_class_name("company_reviews_pagination_link_nav".click)
-        #currently stock on looping over page 1
+        next_btn = driver.find_element_by_xpath("//a[@data-tn-element='next-page']/span")
+        next_btn.click()
     except:
-        print ("Done!")
+        next
         
-    with open ("reviews/"+item+".txt", "w") as output:
+    with open ("reviews/test.txt", "w") as output:
             #for i in range(0, len(txt_rev)):
              #   rev_comp.append(txt_rev[i].text)
              output.write(str(rev_comp))
                 
-    with open("reviews/"+item+"pros.txt", "w") as output:
+    with open("reviews/test_pros.txt", "w") as output:
         #for i in range(0, len(pros)):
          #   pros_comp.append(pros[i].text)
             output.write(str(pros_comp))
             
-    with open("reviews/"+item+"cons.txt", "w") as output:
+    with open("reviews/test_cons.txt", "w") as output:
         #for i in range(0, len(cons)):
         #    cons_comp.append(cons[i].text)
             output.write(str(cons_comp))
