@@ -8,9 +8,12 @@ Created on Mon Jun 12 10:48:19 2017
 """
 
 from selenium import webdriver
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import TimeoutException
 
 import csv
 import pandas as pd
@@ -43,8 +46,6 @@ links = ["https://www.indeed.com/Best-Places-to-Work",
 
 #get values of Select(driver.find_element_by_xpath("//div[@id = 'cmp-discovery-country-select']/select"))
 
-'''
-for some reason it now gives me an error and doesn't start with step 2. It worked at work on the same computer. 
 companies = [ ]
 
 for item in links:
@@ -61,13 +62,13 @@ for item in links:
     # select the reviews. 
 
 #driver.quit()
-'''
+
+#companies = pd.read_csv("companies_indeed_leaderboard.csv", names=["company"], header=0)
+
+#driver = init_driver()
 
 
-companies = pd.read_csv("companies_indeed_leaderboard.csv", names=["company"], header=0)
-
-driver = init_driver()
-for item in companies[0]:
+for item in companies:
     rev_comp = []
     pros_comp = []
     cons_comp = []
@@ -77,69 +78,89 @@ for item in companies[0]:
     #select reviews
     navigate_page(driver, "https://www.indeed.com/Best-Places-to-Work")
     
-    inputElement = driver.find_element_by_id("search-by-company")
+    inputElement = driver.find_element_by_id("search-by-company-input")
     inputElement.send_keys(item)
     inputElement.send_keys(Keys.ENTER)
 
-    while True: #
+    rev_btn = driver.find_element_by_xpath("//div[@class='cmp-tile-footer-element']/a[@data-tn-element='reviews-footer-link']")
+    rev_btn.click()
     
-    # grap the reviews and store in datafile w/ name = item
-    # currently only does 1st page. Need to create loop also for this? Or better way
-    #for all pages ()
-#            wait.until(EC.visibility_of_element_located())
     print ("wait 10s for page to load")
-    driver.wait = WebDriverWait(driver, 10)    
     
-    txt_rev = driver.find_elements_by_xpath("//span[@class='cmp-review-text']")
-    print ("text found")
-    pros = driver.find_elements_by_xpath("//div[@class='cmp-review-pro-text']")
-    print ("pros found" )
-    cons = driver.find_elements_by_xpath("//div[@class='cmp-review-con-text']")
-    print ("cons found")
+    driver.wait = WebDriverWait(driver, 10) 
     
-    # store output
-    print ("begin storing")
-    for i in range(0, len(txt_rev)):
-        rev_comp.append(txt_rev[i].text)
-    print ("stored text in rev_comp")
-    for i in range(0, len(pros)):
-        pros_comp.append(pros[i].text)
-    print ("stored pros in pros_comp")
-    for i in range(0, len(cons)):
-        cons_comp.append(cons[i].text)
-    print ("stored cons in cons_comp")
+    #create text files to store results
+    with open ("reviews/text_"+item+".txt", "w", encoding='utf8') as text_out, open("reviews/pros_"+item+".txt", "w", encoding='utf8') as pro_out, open("reviews/cons_"+item+".txt", "w", encoding='utf8') as con_out:
+        text_out.close, pro_out.close, con_out.close
         
-    print ("page done, go to next") 
-
-    next_btn = driver.find_element_by_xpath("//a[@data-tn-element='next-page']/span")
-    next_btn.click() 
-    txt_rev = []
-    pros = [ ]
-    cons = [ ]
-    element = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, "//span[@class='cmp-review-text']")))
-    
-
-    try:
-        next_btn = driver.find_element_by_xpath("//a[@data-tn-element='next-page']/span")
-        next_btn.click()
-    except:
-        next
+        while True: #
         
-    with open ("reviews/test.txt", "w") as output:
-            #for i in range(0, len(txt_rev)):
-             #   rev_comp.append(txt_rev[i].text)
-             output.write(str(rev_comp))
-                
-    with open("reviews/test_pros.txt", "w") as output:
-        #for i in range(0, len(pros)):
-         #   pros_comp.append(pros[i].text)
-            output.write(str(pros_comp))
+        # grap the reviews and store in datafile w/ name = item
+        # currently only does 1st page. Need to create loop also for this? Or better way
+        #for all pages ()
             
-    with open("reviews/test_cons.txt", "w") as output:
-        #for i in range(0, len(cons)):
-        #    cons_comp.append(cons[i].text)
-            output.write(str(cons_comp))
+            txt_rev = driver.find_elements_by_xpath("//span[@class='cmp-review-text']")
+            print ("text found")
+            pros = driver.find_elements_by_xpath("//div[@class='cmp-review-pro-text']")
+            print ("pros found" )
+            cons = driver.find_elements_by_xpath("//div[@class='cmp-review-con-text']")
+            print ("cons found")
+            
+            
+            # store output
+            print ("begin storing")
+            for i in range(0, len(txt_rev)):
+                rev_comp.append(txt_rev[i].text)
+            print ("stored text in rev_comp")
+            for i in range(0, len(pros)):
+                pros_comp.append(pros[i].text)
+            print ("stored pros in pros_comp")
+            for i in range(0, len(cons)):
+                cons_comp.append(cons[i].text)
+            print ("stored cons in cons_comp")
                     
+            print ("page done, go to next") 
+            
+            
+            txt_rev = []
+            pros = [ ]
+            cons = [ ]
+            
+            #this is reopening the files to append the data. files so far not closed
+            with open ("reviews/text_"+item+".txt", "a", encoding='utf8') as output:
+                #for i in range(0, len(txt_rev)):
+                 #   rev_comp.append(txt_rev[i].text)
+                 text_out.write(str(rev_comp))
+                    
+            with open("reviews/pros_"+item+".txt", "a", encoding='utf8') as output:
+            #for i in range(0, len(pros)):
+             #   pros_comp.append(pros[i].text)
+                 pro_out.write(str(pros_comp))
+                
+            with open("reviews/cons_"+item+".txt", "a", encoding='utf8') as output:
+            #for i in range(0, len(cons)):
+            #    cons_comp.append(cons[i].text)
+                con_out.write(str(cons_comp))
+            
+            next_btn = driver.find_element_by_xpath("//a[@data-tn-element='next-page']/span")
+            next_btn.click() 
+            
+            #element = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//span[@class='cmp-review-text']")))
+            ''' 
+            #this block of try except code returned a stale element exception
+            try:
+                next_btn = driver.find_element_by_xpath("//a[@data-tn-element='next-page']/span")
+                next_btn.click()
+            except TimeoutException:
+                next
+            '''
+            try:
+                element = wait.until(EC.element_to_be_clickable((By.XPATH, '*[contains(@class, "reviews_pagination_link_nav")]//span[. = "next-page"]')))
+                element.click()
+            except: 
+                break
+                #throws exception NoSuchElementException on the last page and ends the program. 
+            
 driver.quit()
 
 #next_btn = driver.find_element_by_xpath("//span[@class='cmp-paginator-page']/a[. ='2']")
