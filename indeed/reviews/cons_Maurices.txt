@@ -1,0 +1,1 @@
+['Not enough hours', 'Healthcare', 'Busy', 'Shortbreaks.', 'Workin nights', 'Short breaks', 'gets really busy', 'busy', 'Health benefits. Only PT.', 'cannot have tattoos that show.', 'Management at times', 'Always moving fast with little time to take a rest']
